@@ -1,6 +1,5 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import Optional #hacer campos opcionales en pydantic
 import uvicorn
 import requests
 import json
@@ -59,6 +58,7 @@ def create_user(user: User):
         "age": user.age,
         "country": user.country
     }
+    
     users.append(new_user)
     
     write_json(json_file_path, users)
