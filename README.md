@@ -42,3 +42,25 @@ Podrás encontrar más información sobre los endpoints documentado en Swagger e
 #### **GET /api/spotify/artist-top-tracks/{artist}**
 
 #### **GET /api/spotify/search/{item}/{type}**
+
+## Instrucciones de uso
+
+### 1. Clonar el Repositorio
+
+Primero, clona el repositorio del proyecto a tu máquina local
+
+### 2. Instalar dependencias 
+
+Instala las dependencias que se encuentran en el archivo requirements.txt
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Levantar los endpoints
+
+Finalmente, levanta las rutas para poder utilizarlas
+
+```bash
+uvicorn main:app --reload
+```
