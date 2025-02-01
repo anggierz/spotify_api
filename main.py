@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Path, Body
 from pydantic import BaseModel
 from typing import List, Dict
 import uvicorn
@@ -22,16 +22,17 @@ class User(BaseModel):
     
 app = FastAPI()
 
-#OK recuperar usuarios de JSON
-@app.get("/api/users")
+
+@app.get("/api/users", tags=["USER ENDPOINTS"], summary="Obtener toda la lista de usuarios",
+         description="Este endpoint devuelve todos los usuarios de la base de datos JSON")
 def get_users():
     users = read_json(json_file_path)
     return users
 
-#OK user que no existe.
-#OK user que existe.
-@app.get("/api/users/{id}")
-def get_user_by_id(id: int):
+
+@app.get("/api/users/{id}", tags=["USER ENDPOINTS"], summary="Obtener un usuario mediante ID",
+         description="Este endpoint devuelve un usuario por ID si este existe en base de datos")
+def get_user_by_id(id: int = Path(..., description="El ID único del usuario que deseas obtener")):
     users = read_json(json_file_path)
     
     result = [ existingUser for existingUser in users if existingUser['id'] == id ]
@@ -41,11 +42,9 @@ def get_user_by_id(id: int):
     
     return result
 
-#OK intentar crear un user con mismo email
-#OK crear user con lista favorite_genres
-#OK crear user sin lista favorite_genres
-@app.post("/api/users")
-def create_user(user: User):
+@app.post("/api/users", tags=["USER ENDPOINTS"], summary="Crear un usuario",
+         description="Este endpoint crea un usuario en la base de datos.")
+def create_user(user: User = Body(..., description="El objeto User que contiene los detalles del nuevo usuario. Debe incluir 'name', 'lastname', 'email', 'age', 'country' y opcionalmente una lista 'favorite_genres'.")):
     users = read_json(json_file_path)
     
     for existingUser in users:
@@ -69,10 +68,9 @@ def create_user(user: User):
     return {"response": "User successfully created!", "user": new_user}
 
 
-#OK intento eliminar usuario que no existe
-#OK eliminar usuario que existe
-@app.delete("/api/users/{id}")
-def delete_user(id: int):
+@app.delete("/api/users/{id}", tags=["USER ENDPOINTS"], summary="Eliminar un usuario",
+         description="Este endpoint elimina un usuario por ID")
+def delete_user(id: int = Path(..., description="El ID único del usuario que deseas eliminar")):
     users = read_json(json_file_path)
     
     idExistsInDatabase = False
@@ -89,9 +87,10 @@ def delete_user(id: int):
     
     return {"response": f"User deletion completed successfully"}
 
-#OK  intentar actualizar usuario que no existe
-@app.post("/api/users/{id}")
-def update_user(id: int, user: User):
+@app.post("/api/users/{id}", tags=["USER ENDPOINTS"], summary="Actualizar un usuario",
+         description="Este endpoint actualiza un usuario por ID")
+def update_user(id: int = Path(..., description="El ID único del usuario que deseas actualizar"),
+                user: User = Body(..., description="El objeto User que contiene los detalles del usuario a actualizar")):
     users = read_json(json_file_path)
     
     # Verificar si el usuario con el ID proporcionado existe
@@ -126,18 +125,18 @@ def update_user(id: int, user: User):
 
 # PARTE DE LA ACTIVIDAD RELACIONADA CON SPOTIFY
 
-@app.get("/api/spotify/artist-top-tracks/{artist}")
-def get_artist_top_tracks(artist: str):
+@app.get("/api/spotify/artist-top-tracks/{artist}", tags=["SPOTIFY ENDPOINTS"], summary="Obtener top tracks de un artista",
+         description="Este endpoint devuelve los top tracks de un artista a partir del nombre del artista.")
+def get_artist_top_tracks(artist: str = Path(..., description="Nombre del artista del cual quieres recuperar sus top tracks. Ejemplo: Taylor Swift")):
     response = search_artist_top_tracks(artist)
     
     return response
 
-@app.get("/api/spotify/search/{item}/{type}")
-def search_item(item: str, type: str):
+@app.get("/api/spotify/search/{item}/{type}", tags=["SPOTIFY ENDPOINTS"], summary="Hacer una búsqueda genérica de items en Spotify",
+         description="Este endpoint devuelve resultados de Spotify a través de un item y un tipo de búsqueda.")
+def search_item(item: str = Path(..., description="Query que quieres realizar"),
+                type: str = Path(..., description="Tipo de búsqueda a realizar. Las opciones son: artist, track, album")):
     response = spotify_search_for_item(item, type)
-    
-    if response.status_code != 200:
-        raise HTTPException(status_code=response.status_code, detail="Error fetching data from Spotify")
     
     return response
 
@@ -219,19 +218,8 @@ def search_artist_top_tracks(artist: str):
     if response.status_code != 200:
         raise HTTPException(status_code=response.status_code, detail="Error fetching data from Spotify")
     
-    tracks = response.json().get("tracks", [])
-    
     # Limpiar la respuesta
     clean_response = clean_spotify_response(response.json(), "top-tracks")
-    # for track in tracks:
-    #     element = {
-    #         "name": track.get("name"),
-    #         "album": track.get("album", {}).get("name"),
-    #         "track_number": track.get("track_number"),
-    #         "release_date": track.get("album", {}).get("release_date"),
-    #         "spotify_url": track.get("external_urls", {}).get("spotify")
-    #     }
-    #     clean_response.append(element)
     
     return clean_response
 
@@ -250,7 +238,10 @@ def spotify_search_for_item(item: str, type: str):
     if response.status_code != 200:
         raise HTTPException(status_code=response.status_code, detail="Error fetching data from Spotify")
     
-    return response.json()
+    # Limpiar la respuesta
+    clean_response = clean_spotify_response(response.json(), type)
+    
+    return clean_response
 
 
 
@@ -281,6 +272,7 @@ def clean_spotify_response(data: Dict, type: str):
         for track in data.get("tracks", {}).get("items", []):
             clean_response.append({
                 "name": track.get("name"),
+                "artist": track.get("artists", [{}])[0].get("name"), #Solo devolvemos primer artista
                 "album": track.get("album", {}).get("name"),
                 "track_number": track.get("track_number"),
                 "release_date": track.get("album", {}).get("release_date"),
@@ -291,6 +283,7 @@ def clean_spotify_response(data: Dict, type: str):
         for album in data.get("albums", {}).get("items", []):
             clean_response.append({
                 "name": album.get("name"),
+                "artist": album.get("artists", [{}])[0].get("name"), #Solo devolvemos primer artista
                 "release_date": album.get("release_date"),
                 "spotify_url": album.get("external_urls", {}).get("spotify")
             })
