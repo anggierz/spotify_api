@@ -57,7 +57,13 @@ Instala las dependencias que se encuentran en el archivo requirements.txt
 pip install -r requirements.txt
 ```
 
-### 3. Levantar los endpoints
+### 3. Configura las variables del archivo .env
+
+Para hacer llamadas al endpoint de Spotify, se necesita **client_id** y **client_secret**. El código del proyecto
+está configurado de manera que carga las variables del archivo .env. Crea tu archivo .env a partir del archivo
+**.env.example** que proporciono en el proyecto. 
+
+### 4. Levantar los endpoints
 
 Finalmente, levanta las rutas para poder utilizarlas
 
