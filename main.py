@@ -221,9 +221,14 @@ def search_artist_top_tracks(artist: str):
 
 def spotify_search_for_item(item: str, type: str):
     SPOTIFY_SEARCH_URL = os.getenv("SPOTIFY_ENDPOINT_SEARCH")
+    
+    if type not in ["album", "artist", "track"]:
+        raise HTTPException(status_code=404, detail=f"Invalid type: {type}. Supported types are: album, artist, track")
+    
+    
     spotify_token = get_spotify_token()
     
-    url = f"{SPOTIFY_SEARCH_URL}?q={item}&type={type}"
+    url = f"{SPOTIFY_SEARCH_URL}?q={item}&type={type}&limit=1"
     
     headers = {
         "Authorization": f"Bearer {spotify_token['access_token']}"
