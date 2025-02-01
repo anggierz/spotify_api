@@ -1,7 +1,6 @@
 from fastapi import FastAPI, HTTPException, Path, Body
 from pydantic import BaseModel
 from typing import List, Dict
-import uvicorn
 import requests
 import json
 import os
