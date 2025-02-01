@@ -182,16 +182,13 @@ def get_spotify_token():
     return token
     
 #Recupera el id de spotify de un artista y devuelve el primer resultado
-def get_artist_id_by_name(artist: str):
+def get_artist_id_by_name(artist: str, token: str):
     SPOTIFY_SEARCH = os.getenv("SPOTIFY_ENDPOINT_SEARCH")
-    
-    spotify_token = get_spotify_token()
-
-    
+  
     url = f"{SPOTIFY_SEARCH}?q={artist}&type=artist"
     
     headers = {
-        "Authorization": f"Bearer {spotify_token['access_token']}"
+        "Authorization": f"Bearer {token}"
     }
     
     req = requests.get(url, headers=headers)
@@ -204,8 +201,8 @@ def get_artist_id_by_name(artist: str):
 def search_artist_top_tracks(artist: str):
     SPOTIFY_ARTISTS_URL = os.getenv("SPOTIFY_ENDPOINT_ARTISTS")
     
-    artist_id = get_artist_id_by_name(artist)
     spotify_token = get_spotify_token()
+    artist_id = get_artist_id_by_name(artist, spotify_token['access_token'])
     url = f"{SPOTIFY_ARTISTS_URL}/{artist_id}/top-tracks"
     
     headers = {
